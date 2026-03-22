@@ -14,7 +14,7 @@
     <div class="relative z-10 flex items-center gap-6">
         <!-- Logo IAI Cameroun -->
         <div class="bg-white rounded-xl p-3 shadow-lg">
-            <img src="https://www.iaicameroun.com/wp-content/uploads/2021/09/logo-iai.png" 
+            <img src="{{ asset('images/logoiai.webp') }}"
                  alt="IAI Cameroun" 
                  class="h-16 w-auto object-contain">
         </div>

@@ -73,7 +73,7 @@ class BorrowController extends Controller
             'book_id' => $validated['book_id'],
             'borrower_id' => $validated['borrower_id'],
             'librarian_id' => auth()->id(),
-            'due_date' => now()->addDays($validated['duration']),
+            'due_date' => now()->addDays((int)$validated['duration']),
             'status' => 'active',
         ]);
         
