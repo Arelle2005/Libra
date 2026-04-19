@@ -5,18 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
-class Borrower extends Authenticatable
+class Borrower extends Model
 {
-    use Notifiable;
-
-    /**
-     * La table associée au modèle
-     */
-    protected $table = 'borrowers';
-
     /**
      * Les attributs qui peuvent être remplis en masse (Mass Assignment)
      */
@@ -24,25 +15,14 @@ class Borrower extends Authenticatable
         'name',
         'matricule',
         'email',
-        'password',  // ✅ Ajouté pour l'authentification
         'phone',
         'type', // student, teacher, staff
-    ];
-
-    /**
-     * Les attributs qui doivent être cachés pour la sérialisation
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
     ];
 
     /**
      * Les attributs qui doivent être castés vers des types natifs
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',  // ✅ Hash automatique du mot de passe
         'type' => 'string',
     ];
 
@@ -64,6 +44,9 @@ class Borrower extends Authenticatable
     /**
      * Un emprunteur peut avoir plusieurs notifications polymorphiques
      * morphMany : Borrower (1) ---- (M) Notification (en tant que notifiable)
+     * 
+     * Cette relation permet d'envoyer des alertes spécifiques à un emprunteur
+     * (ex: retard de retour, nouveau livre disponible, etc.)
      */
     public function notifications(): MorphMany
     {
@@ -77,7 +60,8 @@ class Borrower extends Authenticatable
      */
 
     /**
-     * Relation : Emprunts actifs uniquement
+     * Relation : Emprunts actifs uniquement (Scope + Relation)
+     * Exemple d'utilisation : $borrower->activeBorrows
      */
     public function activeBorrows(): HasMany
     {
@@ -86,6 +70,7 @@ class Borrower extends Authenticatable
 
     /**
      * Relation : Emprunts en retard uniquement
+     * Exemple d'utilisation : $borrower->overdueBorrows
      */
     public function overdueBorrows(): HasMany
     {
@@ -96,6 +81,8 @@ class Borrower extends Authenticatable
 
     /**
      * Charger les emprunts avec les informations du livre (Eager Loading helper)
+     * Évite le problème N+1 queries
+     * Exemple d'utilisation : $borrower->borrowsWithBook()
      */
     public function borrowsWithBook()
     {
@@ -110,6 +97,7 @@ class Borrower extends Authenticatable
 
     /**
      * Scope : Recherche multicritère (nom, matricule, email)
+     * Exemple d'utilisation : Borrower::search('Jean')->get()
      */
     public function scopeSearch($query, $keyword)
     {
@@ -121,7 +109,8 @@ class Borrower extends Authenticatable
     }
 
     /**
-     * Scope : Filtrer par type d'emprunteur
+     * Scope : Filtrer par type d'emprunteur (student, teacher, staff)
+     * Exemple d'utilisation : Borrower::byType('teacher')->get()
      */
     public function scopeByType($query, $type)
     {
@@ -130,6 +119,7 @@ class Borrower extends Authenticatable
 
     /**
      * Scope : Filtrer uniquement les étudiants
+     * Exemple d'utilisation : Borrower::students()->get()
      */
     public function scopeStudents($query)
     {
@@ -138,6 +128,7 @@ class Borrower extends Authenticatable
 
     /**
      * Scope : Filtrer uniquement les enseignants
+     * Exemple d'utilisation : Borrower::teachers()->get()
      */
     public function scopeTeachers($query)
     {
@@ -152,6 +143,7 @@ class Borrower extends Authenticatable
 
     /**
      * Vérifier si l'emprunteur a des emprunts en cours
+     * Exemple d'utilisation : $borrower->hasActiveBorrows()
      */
     public function hasActiveBorrows(): bool
     {
@@ -160,6 +152,7 @@ class Borrower extends Authenticatable
 
     /**
      * Compter le nombre d'emprunts en retard
+     * Exemple d'utilisation : $borrower->countOverdue()
      */
     public function countOverdue(): int
     {
@@ -171,6 +164,7 @@ class Borrower extends Authenticatable
 
     /**
      * Formatage du nom complet pour l'affichage
+     * Exemple d'utilisation : $borrower->formattedName
      */
     public function getFormattedNameAttribute(): string
     {
@@ -178,7 +172,8 @@ class Borrower extends Authenticatable
     }
 
     /**
-     * Générer un badge de type pour l'interface
+     * Générer un badge de type pour l'interface (student/teacher/staff)
+     * Exemple d'utilisation : $borrower->typeBadge
      */
     public function getTypeBadgeAttribute(): array
     {
@@ -192,12 +187,15 @@ class Borrower extends Authenticatable
 
     /**
      * Vérifier si l'emprunteur peut emprunter un nouveau livre
+     * (Règle métier : max 3 livres simultanés pour les étudiants)
+     * Exemple d'utilisation : $borrower->canBorrow()
      */
     public function canBorrow(int $limit = 3): bool
     {
         if ($this->type === 'student') {
             return $this->activeBorrows()->count() < $limit;
         }
+        // Enseignants et personnel : pas de limite stricte
         return true;
     }
 }

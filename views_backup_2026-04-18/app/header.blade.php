@@ -6,7 +6,7 @@
             {{-- Logo et Titre --}}
             <div class="flex items-center gap-4">
                 <div class="bg-white rounded-xl p-2 shadow-md">
-                    <img src="{{ asset('images/logoIAI.webp') }}" 
+                    <img src="{{ asset('images/logoiai.webp') }}" 
                          alt="IAI Cameroun" 
                          class="h-12 w-auto object-contain">
                 </div>
